@@ -2,8 +2,10 @@ package helpers
 
 import (
 	"errors"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"log"
+	"strings"
 )
 
 const key = "P4NC4$!L4"
@@ -26,8 +28,17 @@ func GenerateToken(id uint, username string) (res string, err error) {
 	return
 }
 
-func VerifyToken(token string) (res interface{}, err error) {
-	parseToken, err := jwt.Parse(token, func(t *jwt.Token) (res interface{}, err error) {
+func VerifyToken(ctx *gin.Context) (res interface{}, err error) {
+	headerToken := ctx.Request.Header.Get("Authorization")
+	bearer := strings.HasPrefix(headerToken, "Bearer")
+	if !bearer {
+		err = errors.New("Invalid header authorization")
+		return
+	}
+
+	stringToken := strings.Split(headerToken, " ")[1]
+
+	token, err := jwt.Parse(stringToken, func(t *jwt.Token) (res interface{}, err error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			err = errors.New("Invalid method header alg")
 			return
@@ -36,11 +47,11 @@ func VerifyToken(token string) (res interface{}, err error) {
 		return
 	})
 
-	if _, ok := parseToken.Claims.(jwt.MapClaims); !ok && !parseToken.Valid {
+	if _, ok := token.Claims.(jwt.MapClaims); !ok && !token.Valid {
 		err = errors.New("token invalid")
 		return
 	}
 
-	res = parseToken.Claims.(jwt.MapClaims)
+	res = token.Claims.(jwt.MapClaims)
 	return
 }
