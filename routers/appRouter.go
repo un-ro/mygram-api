@@ -1,42 +1,45 @@
 package routers
 
-import "github.com/gin-gonic/gin"
+import (
+	"MyGram/controllers"
+	"github.com/gin-gonic/gin"
+)
 
 func StartServer() *gin.Engine {
 	r := gin.Default()
 
 	userRouter := r.Group("/user")
 	{
-		userRouter.POST("/register")
-		userRouter.POST("/login")
+		userRouter.POST("/register", controllers.Register)
+		userRouter.POST("/login", controllers.Login)
 	}
 
 	r.Static("/img", "./assets")
 	photoRouter := r.Group("/photo")
 	{
-		photoRouter.POST("/post")
-		photoRouter.GET("/getAll")
-		photoRouter.GET("/getOne/:photoID")
-		photoRouter.PUT("/update/:photoID")
-		photoRouter.DELETE("/delete/:photoID")
+		photoRouter.POST("/post", controllers.CreatePhoto)
+		photoRouter.GET("/getAll", controllers.GetAllPhotos)
+		photoRouter.GET("/getOne/:photoID", controllers.GetPhoto)
+		photoRouter.PUT("/update/:photoID", controllers.UpdatePhoto)
+		photoRouter.DELETE("/delete/:photoID", controllers.DeletePhoto)
 	}
 
 	commentRouter := r.Group("/comment")
 	{
-		commentRouter.POST("/create")
-		commentRouter.GET("/getAll")
-		commentRouter.GET("/getOne/:commentID")
-		commentRouter.PUT("/update/:commentID")
-		commentRouter.DELETE("/delete/:commentID")
+		commentRouter.POST("/create", controllers.CreateComment)
+		commentRouter.GET("/getAll", controllers.GetAllComment)
+		commentRouter.GET("/getOne/:commentID", controllers.GetOneComment)
+		commentRouter.PUT("/update/:commentID", controllers.UpdateComment)
+		commentRouter.DELETE("/delete/:commentID", controllers.DeleteComment)
 	}
 
 	socialMediaRouter := r.Group("/social-media")
 	{
-		socialMediaRouter.POST("/create")
-		socialMediaRouter.GET("/getAll")
-		socialMediaRouter.GET("/getOne/:socialMediaID")
-		socialMediaRouter.PUT("/update/:socialMediaID")
-		socialMediaRouter.DELETE("/delete/:socialMediaID")
+		socialMediaRouter.POST("/create", controllers.CreateSocialMedia)
+		socialMediaRouter.GET("/getAll", controllers.GetAllSocialMedia)
+		socialMediaRouter.GET("/getOne/:socialMediaID", controllers.GetOneSocialMedia)
+		socialMediaRouter.PUT("/update/:socialMediaID", controllers.UpdateSocialMedia)
+		socialMediaRouter.DELETE("/delete/:socialMediaID", controllers.DeleteSocialMedia)
 	}
 
 	return r
