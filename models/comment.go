@@ -1,5 +1,10 @@
 package models
 
+import (
+	"github.com/asaskevich/govalidator"
+	"gorm.io/gorm"
+)
+
 type Comment struct {
 	BaseModel
 	UserID  uint   `json:"user_id" gorm:"not null"`
@@ -9,4 +14,22 @@ type Comment struct {
 
 func (c *Comment) TableName() string {
 	return "tb_comments"
+}
+
+func (c *Comment) BeforeCreate(tx *gorm.DB) (err error) {
+	_, err = govalidator.ValidateStruct(c)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (c *Comment) BeforeUpdate(tx *gorm.DB) (err error) {
+	_, err = govalidator.ValidateStruct(c)
+	if err != nil {
+		return
+	}
+
+	return
 }

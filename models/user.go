@@ -1,5 +1,11 @@
 package models
 
+import (
+	"MyGram/helpers"
+	"github.com/asaskevich/govalidator"
+	"gorm.io/gorm"
+)
+
 type User struct {
 	BaseModel
 	Username string `json:"username" form:"username" gorm:"not null" valid:"required~Username is required"`
@@ -15,4 +21,15 @@ type User struct {
 
 func (u *User) TableName() string {
 	return "tb_users"
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+	_, err = govalidator.ValidateStruct(u)
+	if err != nil {
+		return
+	}
+
+	u.Password = helpers.HashPassword(u.Password)
+
+	return
 }

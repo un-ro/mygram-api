@@ -1,5 +1,10 @@
 package models
 
+import (
+	"github.com/asaskevich/govalidator"
+	"gorm.io/gorm"
+)
+
 type Photo struct {
 	BaseModel
 	Title    string `json:"title" form:"title" gorm:"not null" valid:"required~Title is required"`
@@ -13,4 +18,22 @@ type Photo struct {
 
 func (p *Photo) TableName() string {
 	return "tb_photo"
+}
+
+func (p *Photo) BeforeCreate(tx *gorm.DB) (err error) {
+	_, err = govalidator.ValidateStruct(p)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (p *Photo) BeforeUpdate(tx *gorm.DB) (err error) {
+	_, err = govalidator.ValidateStruct(p)
+	if err != nil {
+		return
+	}
+
+	return
 }
