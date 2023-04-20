@@ -10,7 +10,7 @@ type User struct {
 	BaseModel
 	Username string `json:"username" form:"username" gorm:"not null" valid:"required~Username is required"`
 	Email    string `json:"email" form:"email" gorm:"not null" valid:"required~Email is required, email~Email not valid"`
-	Password string `json:"password" form:"password" gorm:"not null" valid:"required~Password is required"`
+	Password string `json:"password" form:"password" gorm:"not null" valid:"required~Password is required, stringlength(6|20)~Password must be at least 6 characters"`
 	Age      int    `json:"age" form:"age" gorm:"not null" valid:"required~Age is required, range(9|100)~Age must be greater than 8"`
 
 	// Relations
