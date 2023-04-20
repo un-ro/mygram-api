@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"MyGram/database"
+	"MyGram/helpers"
 	"MyGram/models"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -9,7 +10,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -25,7 +25,6 @@ func CreatePhoto(ctx *gin.Context) {
 	_ = ctx.ShouldBind(&photo)
 	file, err := ctx.FormFile("photo_url")
 	if err == nil {
-
 		charset := []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 		stringRandom := make([]byte, rand.Intn(100))
 		for i := range stringRandom {
@@ -37,19 +36,17 @@ func CreatePhoto(ctx *gin.Context) {
 		log.Println("file ext ->", ext)
 
 		if ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "webp" {
-			dst := "./assets/" + username + "-" + string(stringRandom) + "." + "jpg"
+			dst := "./img/" + username + "-" + string(stringRandom) + "." + "jpg"
 			err := ctx.SaveUploadedFile(file, dst)
 			if err != nil {
-				ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
+				helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 				return
 			}
 
-			urlPhoto := "http://" + ctx.Request.Host + "/img/" + username + "-" + string(stringRandom) + "." + "jpg"
+			urlPhoto := fmt.Sprintf("http://%s/img/%s-%s.jpg", ctx.Request.Host, username, string(stringRandom))
 			photo.PhotoUrl = urlPhoto
 		} else {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "File is not image/photo",
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, "File is not image/photo")
 			return
 		}
 	}
@@ -58,13 +55,11 @@ func CreatePhoto(ctx *gin.Context) {
 
 	err = db.Debug().Create(&photo).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, photo)
+	helpers.SuccessResponse(ctx, http.StatusCreated, photo)
 }
 
 func GetAllPhotos(ctx *gin.Context) {
@@ -73,37 +68,27 @@ func GetAllPhotos(ctx *gin.Context) {
 	db := database.GetDB()
 
 	if _, ok := ctx.GetQuery("user_id"); ok {
-		user_id, err := strconv.Atoi(ctx.Query("user_id"))
+		userId := helpers.ConvertKeyToInt(ctx, "user_id", "user_id must be integer")
+
+		err := db.Debug().Preload("Comments").Order("id").Where("user_id = ?", userId).Find(&photos).Error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "Input user_id with number",
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		err = db.Debug().Preload("Comments").Order("id").Where("user_id = ?", user_id).Find(&photos).Error
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-
 	} else {
-
 		err := db.Debug().Preload("Comments").Order("id").Find(&photos).Error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 			return
 		}
-
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"result": photos,
-	})
+	if len(photos) == 0 {
+		helpers.SuccessResponse(ctx, http.StatusOK, "No photos found")
+		return
+	}
+
+	helpers.SuccessResponse(ctx, http.StatusOK, photos)
 }
 
 func GetPhoto(ctx *gin.Context) {
@@ -111,23 +96,15 @@ func GetPhoto(ctx *gin.Context) {
 
 	db := database.GetDB()
 
-	photoID, err := strconv.Atoi(ctx.Param("photoID"))
+	photoId := helpers.ConvertKeyToInt(ctx, "photoID", "photoID must be integer")
+
+	err := db.Debug().Preload("Comments").Where("id = ?", photoId).First(&photo).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = db.Debug().Preload("Comments").Where("id = ?", photoID).First(&photo).Error
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, photo)
+	helpers.SuccessResponse(ctx, http.StatusOK, photo)
 }
 
 func UpdatePhoto(ctx *gin.Context) {
@@ -135,23 +112,15 @@ func UpdatePhoto(ctx *gin.Context) {
 
 	db := database.GetDB()
 
-	photoID, err := strconv.Atoi(ctx.Param("photoID"))
+	photoId := helpers.ConvertKeyToInt(ctx, "photoID", "photoID must be integer")
+
+	err := db.Debug().Where("id = ?", photoId).First(&findPhoto).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = db.Debug().Where("id = ?", photoID).First(&findPhoto).Error
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "Photo not found",
-		})
-		return
-	}
-
-	_ = ctx.ShouldBind(&photo)
+	helpers.BindRequest(ctx, &photo)
 
 	photo = models.Photo{
 		Title:    photo.Title,
@@ -159,27 +128,23 @@ func UpdatePhoto(ctx *gin.Context) {
 		PhotoUrl: findPhoto.PhotoUrl,
 	}
 
-	photo.ID = uint(photoID)
+	photo.ID = uint(photoId)
 	photo.CreatedAt = findPhoto.CreatedAt
 	photo.UserID = findPhoto.UserID
 
-	err = db.Debug().Model(&photo).Where("id = ?", photoID).Updates(photo).Error
+	err = db.Debug().Model(&photo).Where("id = ?", photoId).Updates(photo).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = db.Debug().Preload("Comments").Where("id = ?", photoID).First(&photo).Error
+	err = db.Debug().Preload("Comments").Where("id = ?", photoId).First(&photo).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, photo)
+	helpers.SuccessResponse(ctx, http.StatusOK, photo)
 }
 
 func DeletePhoto(ctx *gin.Context) {
@@ -187,23 +152,13 @@ func DeletePhoto(ctx *gin.Context) {
 
 	db := database.GetDB()
 
-	photoID, err := strconv.Atoi(ctx.Param("photoID"))
+	photoId := helpers.ConvertKeyToInt(ctx, "photoID", "photoID must be integer")
+
+	err := db.Debug().Where("id = ?", photoId).First(&photo).Delete(&photo).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = db.Debug().Where("id = ?", photoID).First(&photo).Delete(&photo).Error
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Photo with title '%s' successfully deleted", photo.Title),
-	})
+	helpers.SuccessResponse(ctx, http.StatusOK, fmt.Sprintf("Photo with title '%s' successfully deleted", photo.Title))
 }

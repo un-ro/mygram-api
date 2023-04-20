@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"strconv"
 )
 
 func CreateSocialMedia(ctx *gin.Context) {
@@ -19,35 +18,17 @@ func CreateSocialMedia(ctx *gin.Context) {
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
 	userID := uint(userData["id"].(float64))
 
-	contentType := helpers.GetHeader(ctx)
-
-	if contentType == helpers.JsonType {
-		if err := ctx.ShouldBindJSON(&socialMedia); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-	} else {
-		if err := ctx.ShouldBind(&socialMedia); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
-			return
-		}
-	}
+	helpers.BindRequest(ctx, &socialMedia)
 
 	socialMedia.UserID = userID
 
 	err := db.Debug().Create(&socialMedia).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, socialMedia)
+	helpers.SuccessResponse(ctx, http.StatusCreated, socialMedia)
 }
 
 func GetAllSocialMedia(ctx *gin.Context) {
@@ -56,41 +37,27 @@ func GetAllSocialMedia(ctx *gin.Context) {
 	db := database.GetDB()
 
 	if _, ok := ctx.GetQuery("user_id"); ok {
-		user_id, err := strconv.Atoi(ctx.Query("user_id"))
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "Input user_id with number",
-			})
-			return
-		}
+		userId := helpers.ConvertKeyToInt(ctx, "user_id", "user_id must be integer")
 
-		err = db.Debug().Order("id").Where("user_id = ?", user_id).Find(&socialMedia).Error
+		err := db.Debug().Order("id").Where("user_id = ?", userId).Find(&socialMedia).Error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if len(socialMedia) == 0 {
-			ctx.JSON(http.StatusNotFound, gin.H{
-				"message": fmt.Sprintf("user_id %d doesn't have social media", user_id),
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, fmt.Sprintf("user_id %d doesn't have social media", userId))
 			return
 		}
 	} else {
 		err := db.Debug().Order("id").Find(&socialMedia).Error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 			return
 		}
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"result": socialMedia,
-	})
+	helpers.SuccessResponse(ctx, http.StatusOK, socialMedia)
 }
 
 func GetOneSocialMedia(ctx *gin.Context) {
@@ -98,23 +65,15 @@ func GetOneSocialMedia(ctx *gin.Context) {
 
 	db := database.GetDB()
 
-	socialMediaID, err := strconv.Atoi(ctx.Param("socialMediaID"))
+	socialMediaID := helpers.ConvertKeyToInt(ctx, "socialMediaID", "socialMediaID must be integer")
+
+	err := db.Debug().Where("id = ?", socialMediaID).First(&socialMedia).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid parameter",
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, "Social media not found")
 		return
 	}
 
-	err = db.Debug().Where("id = ?", socialMediaID).First(&socialMedia).Error
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "Social media not found",
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, socialMedia)
+	helpers.SuccessResponse(ctx, http.StatusOK, socialMedia)
 }
 
 func UpdateSocialMedia(ctx *gin.Context) {
@@ -122,33 +81,13 @@ func UpdateSocialMedia(ctx *gin.Context) {
 
 	db := database.GetDB()
 
-	socialMediaID, err := strconv.Atoi(ctx.Param("socialMediaID"))
+	socialMediaID := helpers.ConvertKeyToInt(ctx, "socialMediaID", "socialMediaID must be integer")
+
+	helpers.BindRequest(ctx, &socialMedia)
+
+	err := db.Debug().Where("id = ?", socialMediaID).First(&findSocialMedia).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
-	contentType := helpers.GetHeader(ctx)
-
-	if contentType == helpers.JsonType {
-		if err := ctx.ShouldBindJSON(&socialMedia); err != nil {
-			ctx.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-	} else {
-		if err := ctx.ShouldBind(&socialMedia); err != nil {
-			ctx.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-	}
-
-	err = db.Debug().Where("id = ?", socialMediaID).First(&findSocialMedia).Error
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "Social media not found",
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, "Social media not found")
 		return
 	}
 
@@ -163,37 +102,24 @@ func UpdateSocialMedia(ctx *gin.Context) {
 
 	err = db.Debug().Model(&socialMedia).Where("id = ?", socialMediaID).Updates(socialMedia).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, socialMedia)
+	helpers.SuccessResponse(ctx, http.StatusOK, socialMedia)
 }
 
 func DeleteSocialMedia(ctx *gin.Context) {
 	var socialMedia models.SocialMedia
 
-	socialMediaID, err := strconv.Atoi(ctx.Param("socialMediaID"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
 	db := database.GetDB()
+	socialMediaID := helpers.ConvertKeyToInt(ctx, "socialMediaID", "socialMediaID must be integer")
 
-	err = db.Debug().Where("id = ?", socialMediaID).First(&socialMedia).Delete(&socialMedia).Error
+	err := db.Debug().Where("id = ?", socialMediaID).First(&socialMedia).Delete(&socialMedia).Error
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Social Media %s successfully deleted", socialMedia.Name),
-	})
+	helpers.SuccessResponse(ctx, http.StatusOK, fmt.Sprintf("Social Media %s successfully deleted", socialMedia.Name))
 }

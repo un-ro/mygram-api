@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"strconv"
 )
 
 func CreateComment(ctx *gin.Context) {
@@ -19,32 +18,13 @@ func CreateComment(ctx *gin.Context) {
 
 	userData := ctx.MustGet("userData").(jwt.MapClaims)
 	userID := uint(userData["id"].(float64))
+	photoID := helpers.ConvertKeyToInt(ctx, "photoID", "Invalid photo id")
 
-	photoID, err := strconv.Atoi(ctx.Query("photo_id"))
+	helpers.BindRequest(ctx, &comment)
+
+	err := db.Debug().Where("id = ?", photoID).First(&photo).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Input photo_id with number",
-		})
-		return
-	}
-
-	contentType := helpers.GetHeader(ctx)
-
-	if contentType == helpers.JsonType {
-		if err := ctx.ShouldBindJSON(&comment); err != nil {
-			ctx.AbortWithError(http.StatusBadRequest, err)
-		}
-	} else {
-		if err := ctx.ShouldBind(&comment); err != nil {
-			ctx.AbortWithError(http.StatusBadRequest, err)
-		}
-	}
-
-	err = db.Debug().Where("id = ?", photoID).First(&photo).Error
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "Photo not found",
-		})
+		helpers.ErrorResponse(ctx, http.StatusNotFound, "Photo not found")
 		return
 	}
 
@@ -53,120 +33,74 @@ func CreateComment(ctx *gin.Context) {
 
 	err = db.Debug().Create(&comment).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, comment)
+	helpers.SuccessResponse(ctx, http.StatusCreated, comment)
 }
 
 func GetAllComment(ctx *gin.Context) {
-	var comment []models.Comment
+	var comments []models.Comment
 	var photo models.Photo
 
 	db := database.GetDB()
+	photoID := helpers.ConvertKeyToInt(ctx, "photoID", "Invalid photo id")
 
-	if _, ok := ctx.GetQuery("photo_id"); ok {
-		photoID, err := strconv.Atoi(ctx.Query("photo_id"))
+	if photoID != 0 {
+		err := db.Debug().Where("id = ?", photoID).First(&photo).Error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": "Input photo_id with number",
-			})
+			helpers.ErrorResponse(ctx, http.StatusNotFound, "Photo not found")
 			return
 		}
 
-		err = db.Debug().Where("id = ?", photoID).First(&photo).Error
+		err = db.Debug().Order("id").Where("photo_id = ?", photoID).Find(&comments).Error
 		if err != nil {
-			ctx.JSON(http.StatusNotFound, gin.H{
-				"message": "Photo not found",
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		err = db.Debug().Order("id").Where("photo_id = ?", photoID).Find(&comment).Error
-		if err != nil {
-			ctx.JSON(http.StatusNotFound, gin.H{
-				"message": err.Error(),
-			})
+		if len(comments) == 0 {
+			helpers.SuccessResponse(ctx, http.StatusOK, "No comments found")
 			return
 		}
-
-		if len(comment) == 0 {
-			ctx.JSON(http.StatusOK, gin.H{
-				"message": "There are no comments for this photo",
-			})
-			return
-		}
-
 	} else {
-
-		err := db.Debug().Order("id").Find(&comment).Error
+		err := db.Debug().Order("id").Find(&comments).Error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
-			})
+			helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 			return
 		}
-
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"result": comment,
-	})
+	helpers.SuccessResponse(ctx, http.StatusOK, comments)
 }
 
 func GetOneComment(ctx *gin.Context) {
 	var comment models.Comment
 
-	commentID, err := strconv.Atoi(ctx.Param("commentID"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid parameter",
-		})
-		return
-	}
-
 	db := database.GetDB()
+	commentID := helpers.ConvertKeyToInt(ctx, "commentID", "Invalid comment id")
 
-	err = db.Debug().Where("id = ?", commentID).First(&comment).Error
+	err := db.Debug().Where("id = ?", commentID).First(&comment).Error
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": "Comment not found",
-		})
+		helpers.ErrorResponse(ctx, http.StatusNotFound, "Comment not found")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, comment)
+	helpers.SuccessResponse(ctx, http.StatusOK, comment)
 }
 
 func UpdateComment(ctx *gin.Context) {
 	var comment, findComment models.Comment
 
-	commentID, err := strconv.Atoi(ctx.Param("commentID"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Input parameter with id",
-		})
-		return
-	}
-
 	db := database.GetDB()
+	commentID := helpers.ConvertKeyToInt(ctx, "commentID", "Invalid comment id")
 
-	contentType := helpers.GetHeader(ctx)
+	helpers.BindRequest(ctx, &comment)
 
-	if contentType == helpers.JsonType {
-		ctx.ShouldBindJSON(&comment)
-	} else {
-		ctx.ShouldBind(&comment)
-	}
-
-	err = db.Debug().Where("id = ?", commentID).First(&findComment).Error
+	err := db.Debug().Where("id = ?", commentID).First(&findComment).Error
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": fmt.Sprintf("Comment with id %d not found", commentID),
-		})
+		helpers.ErrorResponse(ctx, http.StatusNotFound, fmt.Sprintf("Comment with id %d not found", commentID))
 		return
 	}
 
@@ -181,37 +115,24 @@ func UpdateComment(ctx *gin.Context) {
 
 	err = db.Debug().Model(&comment).Where("id = ?", commentID).Updates(comment).Error
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, comment)
+	helpers.SuccessResponse(ctx, http.StatusOK, comment)
 }
 
 func DeleteComment(ctx *gin.Context) {
 	var comment models.Comment
 
-	commentID, err := strconv.Atoi(ctx.Param("commentID"))
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": "Input parameter with id",
-		})
-		return
-	}
-
 	db := database.GetDB()
+	commentID := helpers.ConvertKeyToInt(ctx, "commentID", "Invalid comment id")
 
-	err = db.Debug().Where("id = ?", commentID).First(&comment).Delete(&comment).Error
+	err := db.Debug().Where("id = ?", commentID).First(&comment).Delete(&comment).Error
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"message": fmt.Sprintf("Comment with id %d not found", commentID),
-		})
+		helpers.ErrorResponse(ctx, http.StatusNotFound, fmt.Sprintf("Comment with id %d not found", commentID))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Comment message '%s' successfully deleted", comment.Message),
-	})
+	helpers.SuccessResponse(ctx, http.StatusOK, fmt.Sprintf("Comment message '%s' successfully deleted", comment.Message))
 }
