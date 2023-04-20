@@ -30,7 +30,7 @@ func BindRequest(ctx *gin.Context, data interface{}) {
 }
 
 func ConvertKeyToInt(ctx *gin.Context, key string, message string) int {
-	id, err := strconv.Atoi(ctx.Query(key))
+	id, err := strconv.Atoi(ctx.Param(key))
 	if err != nil {
 		ErrorResponse(ctx, http.StatusBadRequest, message)
 		return 0
