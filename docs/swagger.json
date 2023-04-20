@@ -1,7 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "Final Project Hacktiv8: Scalable microservices Web API with Golang",
+        "title": "My Gram API",
+        "contact": {
+            "email": "ramadhanbhg@gmail.com"
+        },
+        "version": "1.0"
     },
     "paths": {
         "/comments/photo/{photoID}": {

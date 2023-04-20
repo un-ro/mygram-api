@@ -13,7 +13,7 @@ func init() {
 
 // @title My Gram API
 // @version 1.0
-// @description Final Project Hacktiv8 Programming Course
+// @description Final Project Hacktiv8: Scalable microservices Web API with Golang
 // @host localhost:8080
 // @BasePath /
 
