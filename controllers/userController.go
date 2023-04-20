@@ -10,30 +10,34 @@ import (
 
 func Register(ctx *gin.Context) {
 	var user models.User
+	var checkUser models.User
 
 	db := database.GetDB()
 
-	contentType := helpers.GetHeader(ctx)
+	// Check if request is json or form-data
+	helpers.BindRequest(ctx, &user)
 
-	if contentType == helpers.JsonType {
-		if err := ctx.ShouldBindJSON(&user); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		}
-	} else {
-		if err := ctx.ShouldBind(&user); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		}
-	}
-
-	err := db.Debug().Create(&user).Error
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+	// Check if username or email is already registered
+	db.Debug().Find(&checkUser, "username = ?", user.Username)
+	if checkUser.Username != "" {
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, "Username is already registered")
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
+	db.Debug().Find(&checkUser, "email = ?", user.Email)
+	if checkUser.Email != "" {
+		helpers.ErrorResponse(ctx, http.StatusBadRequest, "Email is already registered")
+		return
+	}
+
+	// Create user
+	err := db.Debug().Create(&user).Error
+	if err != nil {
+		helpers.ErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	helpers.SuccessResponse(ctx, http.StatusCreated, gin.H{
 		"id":       user.ID,
 		"age":      user.Age,
 		"email":    user.Email,
@@ -46,38 +50,28 @@ func Login(ctx *gin.Context) {
 
 	db := database.GetDB()
 
-	contentType := helpers.GetHeader(ctx)
+	// Check if request is json or form-data
+	helpers.BindRequest(ctx, &user)
 
-	if contentType == helpers.JsonType {
-		if err := ctx.ShouldBindJSON(&user); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		}
-	} else {
-		if err := ctx.ShouldBind(&user); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
-		}
-	}
-
+	// Check if email is registered
 	password := user.Password
 	err := db.Debug().Where("email = ?", user.Email).First(&user).Error
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, err)
+		helpers.ErrorResponse(ctx, http.StatusUnauthorized, "Email is not registered")
 		return
 	}
 
 	compare := helpers.ComparePassword([]byte(user.Password), []byte(password))
 	if !compare {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, "Password is wrong")
+		helpers.ErrorResponse(ctx, http.StatusUnauthorized, "Password is wrong")
 		return
 	}
 
 	token, err := helpers.GenerateToken(user.ID, user.Username)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err)
+		helpers.ErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"token": token,
-	})
+	helpers.LoginResponse(ctx, http.StatusOK, token)
 }
