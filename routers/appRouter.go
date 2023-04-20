@@ -3,6 +3,11 @@ package routers
 import (
 	"MyGram/controllers"
 	"MyGram/middlewares"
+
+	_ "MyGram/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -51,6 +56,8 @@ func StartServer() *gin.Engine {
 		socialMediaRouter.PUT("/:socialMediaID", middlewares.SocialMediaAuth(), controllers.UpdateSocialMedia)
 		socialMediaRouter.DELETE("/:socialMediaID", middlewares.SocialMediaAuth(), controllers.DeleteSocialMedia)
 	}
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }

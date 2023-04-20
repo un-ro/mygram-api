@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Comment represents the model for an Comment
 type Comment struct {
 	BaseModel
 	UserID  uint   `json:"user_id" gorm:"not null"`
