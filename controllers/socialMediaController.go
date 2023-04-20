@@ -17,10 +17,10 @@ import (
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param SocialMedia body models.RequestSocialMedia true "create social media"
+// @Param SocialMedia body dto.RequestSocialMedia true "create social media"
 // @Success 201 {object} models.SocialMedia
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
 // @Router /social-media [post]
 func CreateSocialMedia(ctx *gin.Context) {
 	var socialMedia models.SocialMedia
@@ -52,9 +52,9 @@ func CreateSocialMedia(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param user_id query string false "Get all social media filter by user_id"
 // @Success 200 {object} models.SocialMedia
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /social-media [get]
 func GetAllSocialMedia(ctx *gin.Context) {
 	var socialMedia []models.SocialMedia
@@ -94,9 +94,9 @@ func GetAllSocialMedia(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param socialMediaID path integer true "ID of the social media"
 // @Success 200 {object} models.SocialMedia
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /social-media/{socialMediaID} [get]
 func GetOneSocialMedia(ctx *gin.Context) {
 	var socialMedia models.SocialMedia
@@ -122,11 +122,11 @@ func GetOneSocialMedia(ctx *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param socialMediaID path integer true "socialMediaID of the data social media to be updated"
-// @Param SocialMedia body models.RequestSocialMedia true "updated social media"
+// @Param SocialMedia body dto.RequestSocialMedia true "updated social media"
 // @Success 200 {object} models.SocialMedia
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /social-media/{socialMediaID} [put]
 func UpdateSocialMedia(ctx *gin.Context) {
 	var socialMedia, findSocialMedia models.SocialMedia
@@ -170,9 +170,9 @@ func UpdateSocialMedia(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param socialMediaID path integer true "socialMediaID of the data social media to be deleted"
 // @Success 200 {object} models.SocialMedia
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /social-media/{socialMediaID} [delete]
 func DeleteSocialMedia(ctx *gin.Context) {
 	var socialMedia models.SocialMedia

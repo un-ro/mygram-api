@@ -20,10 +20,10 @@ import (
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param PostPhoto body models.RequestPhoto true "Post photo"
+// @Param PostPhoto body dto.RequestPhoto true "Post photo"
 // @Success 201 {object} models.Photo
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
 // @Router /photos [post]
 func CreatePhoto(ctx *gin.Context) {
 	var photo models.Photo
@@ -83,9 +83,9 @@ func CreatePhoto(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param user_id query integer false "Get all photo filter by user_id"
 // @Success 200 {object} models.Photo
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /photos [get]
 func GetAllPhotos(ctx *gin.Context) {
 	var photos []models.Photo
@@ -125,9 +125,9 @@ func GetAllPhotos(ctx *gin.Context) {
 // @Security BearerAuth
 // @Param photoID path integer true "ID of the photo"
 // @Success 200 {object} models.Photo
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /photos/{photoID} [get]
 func GetPhoto(ctx *gin.Context) {
 	var photo models.Photo
@@ -152,11 +152,11 @@ func GetPhoto(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param photoID path integer true "photoID of the data photo to be updated"
-// @Param UpdatePhoto body models.RequestPhoto true "Update photo"
+// @Param UpdatePhoto body dto.RequestPhoto true "Update photo"
 // @Success 200 {object} models.Photo
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /photos/{photoID} [put]
 func UpdatePhoto(ctx *gin.Context) {
 	var photo, findPhoto models.Photo
@@ -207,9 +207,9 @@ func UpdatePhoto(ctx *gin.Context) {
 // @Security
 // @Param photoID path integer true "photoID of the data photo to be deleted"
 // @Success 200 {object} models.Photo
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailedUnauthorized
-// @Failure 404 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailedUnauthorized
+// @Failure 404 {object} dto.ResponseFailed
 // @Router /photos/{photoID} [delete]
 func DeletePhoto(ctx *gin.Context) {
 	var photo models.Photo

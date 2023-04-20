@@ -14,9 +14,9 @@ import (
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param UserRegister body models.RequestUserRegister true "User Register"
+// @Param UserRegister body dto.RequestUserRegister true "User Register"
 // @Success 200 {object} models.User
-// @Failure 400 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
 // @Router /user/register [post]
 func Register(ctx *gin.Context) {
 	var user models.User
@@ -61,10 +61,10 @@ func Register(ctx *gin.Context) {
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param UserLogin body models.RequestUserLogin true "User Login"
+// @Param UserLogin body dto.RequestUserLogin true "User Login"
 // @Success 200 {object} models.User
-// @Failure 400 {object} models.ResponseFailed
-// @Failure 401 {object} models.ResponseFailed
+// @Failure 400 {object} dto.ResponseFailed
+// @Failure 401 {object} dto.ResponseFailed
 // @Router /user/login [post]
 func Login(ctx *gin.Context) {
 	var user models.User

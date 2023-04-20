@@ -1,0 +1,724 @@
+definitions:
+  dto.RequestComment:
+    properties:
+      comment_message:
+        type: string
+    type: object
+  dto.RequestPhoto:
+    properties:
+      caption:
+        type: string
+      photo_url:
+        type: string
+      title:
+        type: string
+    type: object
+  dto.RequestSocialMedia:
+    properties:
+      name:
+        type: string
+      social_media_url:
+        type: string
+    type: object
+  dto.RequestUserLogin:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.RequestUserRegister:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.ResponseFailed:
+    properties:
+      message:
+        type: string
+    type: object
+  dto.ResponseFailedUnauthorized:
+    properties:
+      message:
+        type: string
+    type: object
+  models.Comment:
+    properties:
+      comment_message:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      photo_id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.Photo:
+    properties:
+      caption:
+        type: string
+      comment_message:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      id:
+        type: integer
+      photo_url:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.SocialMedia:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      social_media_url:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      age:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      photos:
+        description: Relations
+        items:
+          $ref: '#/definitions/models.Photo'
+        type: array
+      socials_media:
+        items:
+          $ref: '#/definitions/models.SocialMedia'
+        type: array
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /comments/{commentID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete data comment by id
+      parameters:
+      - description: commentID of the data comment to be deleted
+        in: path
+        name: commentID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Delete data comment by id
+      tags:
+      - Comment
+    get:
+      consumes:
+      - application/json
+      description: Get comment by id
+      parameters:
+      - description: ID of the photo
+        in: path
+        name: commentID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Get comment
+      tags:
+      - Comment
+    put:
+      consumes:
+      - application/json
+      description: Update comment by id
+      parameters:
+      - description: commentID of the data comment to be updated
+        in: path
+        name: commentID
+        required: true
+        type: integer
+      - description: Updated comment
+        in: body
+        name: UpdateComment
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestComment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Update comment
+      tags:
+      - Comment
+  /comments/{photoID}:
+    post:
+      consumes:
+      - application/json
+      description: Create comment by photo id
+      parameters:
+      - description: Photo for comment
+        in: query
+        name: photo_id
+        required: true
+        type: integer
+      - description: Create comment
+        in: body
+        name: CreateComment
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestComment'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Create comment
+      tags:
+      - Comment
+  /comments/photo/{photoID}:
+    delete:
+      consumes:
+      - application/json
+      description: Get all comments from photo id
+      parameters:
+      - description: Get all comment from photo_id
+        in: query
+        name: photo_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Get all comments
+      tags:
+      - Comment
+  /photos:
+    get:
+      consumes:
+      - application/json
+      description: Get details of all photo or add query parameter user_id for all
+        photo from user_id (optional)
+      parameters:
+      - description: Get all photo filter by user_id
+        in: query
+        name: user_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Photo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Get details of All photo
+      tags:
+      - Photo
+    post:
+      consumes:
+      - application/json
+      description: Post a new Photo from user
+      parameters:
+      - description: Post photo
+        in: body
+        name: PostPhoto
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestPhoto'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Photo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+      security:
+      - BearerAuth: []
+      summary: Post Photo
+      tags:
+      - Photo
+  /photos/{photoID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete data photo by id
+      parameters:
+      - description: photoID of the data photo to be deleted
+        in: path
+        name: photoID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Photo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - "": []
+      summary: Delete data photo by id
+      tags:
+      - Photo
+    get:
+      consumes:
+      - application/json
+      description: Get details of photo by id
+      parameters:
+      - description: ID of the photo
+        in: path
+        name: photoID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Photo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Get details of photo by id
+      tags:
+      - Photo
+    put:
+      consumes:
+      - application/json
+      description: Update detail of photo by id
+      parameters:
+      - description: photoID of the data photo to be updated
+        in: path
+        name: photoID
+        required: true
+        type: integer
+      - description: Update photo
+        in: body
+        name: UpdatePhoto
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestPhoto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Photo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      summary: Update detail of photo by id
+      tags:
+      - Photo
+  /social-media:
+    get:
+      consumes:
+      - application/json
+      description: Get details of all social media or add query parameter user_id
+        for all social media from user_id (optional)
+      parameters:
+      - description: Get all social media filter by user_id
+        in: query
+        name: user_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SocialMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Get details of all social media
+      tags:
+      - Social Media
+    post:
+      consumes:
+      - application/json
+      description: Create a new social media for a user
+      parameters:
+      - description: create social media
+        in: body
+        name: SocialMedia
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestSocialMedia'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.SocialMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+      security:
+      - BearerAuth: []
+      summary: Create Social media
+      tags:
+      - Social Media
+  /social-media/{socialMediaID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete data social media by id
+      parameters:
+      - description: socialMediaID of the data social media to be deleted
+        in: path
+        name: socialMediaID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SocialMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Delete data social media
+      tags:
+      - Social Media
+    get:
+      consumes:
+      - application/json
+      description: Get details of social media corresponding to the input socialMediaID
+      parameters:
+      - description: ID of the social media
+        in: path
+        name: socialMediaID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SocialMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Get details for a given socialMediaID
+      tags:
+      - Social Media
+    put:
+      consumes:
+      - application/json
+      description: Update data social media by id
+      parameters:
+      - description: socialMediaID of the data social media to be updated
+        in: path
+        name: socialMediaID
+        required: true
+        type: integer
+      - description: updated social media
+        in: body
+        name: SocialMedia
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestSocialMedia'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SocialMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailedUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      security:
+      - BearerAuth: []
+      summary: Updated data social media
+      tags:
+      - Social Media
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: Login user to get token (jwt)
+      parameters:
+      - description: User Login
+        in: body
+        name: UserLogin
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestUserLogin'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      summary: Login User
+      tags:
+      - User
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: Register user for MyGram
+      parameters:
+      - description: User Register
+        in: body
+        name: UserRegister
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RequestUserRegister'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ResponseFailed'
+      summary: Register User
+      tags:
+      - User
+swagger: "2.0"
